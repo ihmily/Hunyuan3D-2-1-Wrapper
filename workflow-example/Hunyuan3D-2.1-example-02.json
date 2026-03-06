@@ -1,0 +1,494 @@
+{
+  "id": "b2f9970c-98cf-463b-99d7-db9d6cf17cf4",
+  "revision": 0,
+  "last_node_id": 43,
+  "last_link_id": 72,
+  "nodes": [
+    {
+      "id": 40,
+      "type": "Preview3D",
+      "pos": [
+        -1101.2890540974115,
+        1943.363155242899
+      ],
+      "size": [
+        934.4773186409511,
+        1000.2598714416863
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "camera_info",
+          "shape": 7,
+          "type": "LOAD3D_CAMERA",
+          "link": null
+        },
+        {
+          "name": "bg_image",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "model_file",
+          "type": "STRING",
+          "widget": {
+            "name": "model_file"
+          },
+          "link": 62
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.8.2",
+        "Node name for S&R": "Preview3D",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.2"
+        },
+        "Last Time Model File": "/root/autodl-tmp/ComfyUI/output/Hunyuan3D_Converted_a92b8e9e.glb",
+        "Resource Folder": "autodl-tmp/ComfyUI/output",
+        "Scene Config": {
+          "showGrid": true,
+          "backgroundColor": "#282828",
+          "backgroundImage": "",
+          "backgroundRenderMode": "tiled"
+        },
+        "Camera Config": {
+          "cameraType": "perspective",
+          "fov": 35,
+          "state": {
+            "position": {
+              "x": 7.350918906249996,
+              "y": 7.0363791074428494,
+              "z": 7.350918906249997
+            },
+            "target": {
+              "x": 0,
+              "y": 2.195249278926065,
+              "z": 0
+            },
+            "zoom": 1,
+            "cameraType": "perspective"
+          }
+        },
+        "Light Config": {
+          "intensity": 5
+        }
+      },
+      "widgets_values": [
+        "/root/autodl-tmp/ComfyUI/output/Hunyuan3D_Converted_a92b8e9e.glb",
+        ""
+      ]
+    },
+    {
+      "id": 36,
+      "type": "Preview3D",
+      "pos": [
+        -129.51840787332384,
+        1954.360883805224
+      ],
+      "size": [
+        920.1890474997874,
+        984.0052592036031
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "camera_info",
+          "shape": 7,
+          "type": "LOAD3D_CAMERA",
+          "link": null
+        },
+        {
+          "name": "bg_image",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "model_file",
+          "type": "STRING",
+          "widget": {
+            "name": "model_file"
+          },
+          "link": 70
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.8.2",
+        "Node name for S&R": "Preview3D",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.2"
+        },
+        "Last Time Model File": "/root/autodl-tmp/ComfyUI/output/028e9b24-f078-43f0-ad55-0519dd8446c9_textured.glb",
+        "Resource Folder": "autodl-tmp/ComfyUI/output",
+        "Scene Config": {
+          "showGrid": true,
+          "backgroundColor": "#282828",
+          "backgroundImage": "",
+          "backgroundRenderMode": "tiled"
+        },
+        "Camera Config": {
+          "cameraType": "perspective",
+          "fov": 35,
+          "state": {
+            "position": {
+              "x": 5.92611119454994,
+              "y": 4.764177261870403,
+              "z": 8.086527210642723
+            },
+            "target": {
+              "x": 0,
+              "y": 2.195052497385315,
+              "z": 0
+            },
+            "zoom": 1,
+            "cameraType": "perspective"
+          }
+        },
+        "Light Config": {
+          "intensity": 3
+        }
+      },
+      "widgets_values": [
+        "/root/autodl-tmp/ComfyUI/output/028e9b24-f078-43f0-ad55-0519dd8446c9_textured.glb",
+        ""
+      ]
+    },
+    {
+      "id": 37,
+      "type": "SaveMesh",
+      "pos": [
+        -134.58698380292105,
+        1544.7797791784883
+      ],
+      "size": [
+        405.4737432129066,
+        118.37720882568783
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "mesh",
+          "type": "MESH",
+          "link": 69
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "aux_id": "Tencent-Hunyuan/Hunyuan3D-2.1",
+        "ver": "82920d643c0dc2f7bfd7255f45f62d386edfe60c",
+        "Node name for S&R": "SaveMesh",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.2"
+        }
+      },
+      "widgets_values": [
+        "glb",
+        "mesh/textured_mesh"
+      ]
+    },
+    {
+      "id": 43,
+      "type": "Hunyuan3D21Texture",
+      "pos": [
+        -128.05539957050453,
+        1736.3320003604633
+      ],
+      "size": [
+        402.05706522217986,
+        141.26319067383702
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "mesh",
+          "type": "MESH",
+          "link": 67
+        },
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 72
+        }
+      ],
+      "outputs": [
+        {
+          "name": "textured_mesh",
+          "type": "MESH",
+          "links": [
+            69
+          ]
+        },
+        {
+          "name": "textured_glb_path",
+          "type": "STRING",
+          "links": [
+            70
+          ]
+        },
+        {
+          "name": "textured_obj_path",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "aux_id": "Tencent-Hunyuan/Hunyuan3D-2.1",
+        "ver": "82920d643c0dc2f7bfd7255f45f62d386edfe60c",
+        "Node name for S&R": "Hunyuan3D21Texture",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.2"
+        }
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 12,
+      "type": "Light-Tool: LoadImage",
+      "pos": [
+        -1968.587808747933,
+        1947.1461817223053
+      ],
+      "size": [
+        792.4755883774377,
+        996.283154320839
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            71,
+            72
+          ]
+        },
+        {
+          "name": "mask",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-light-tool",
+        "ver": "f0baac07ea078fca03f093520ca349b67564c604",
+        "Node name for S&R": "Light-Tool: LoadImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.2"
+        }
+      },
+      "widgets_values": [
+        "qie.png",
+        true,
+        "image"
+      ]
+    },
+    {
+      "id": 42,
+      "type": "Hunyuan3D21Shape",
+      "pos": [
+        -1280.0526118219193,
+        1580.0454761532187
+      ],
+      "size": [
+        357.2798828125,
+        246
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 71
+        }
+      ],
+      "outputs": [
+        {
+          "name": "mesh",
+          "type": "MESH",
+          "links": [
+            67
+          ]
+        },
+        {
+          "name": "mesh_obj_path",
+          "type": "STRING",
+          "links": [
+            66
+          ]
+        }
+      ],
+      "properties": {
+        "aux_id": "Tencent-Hunyuan/Hunyuan3D-2.1",
+        "ver": "82920d643c0dc2f7bfd7255f45f62d386edfe60c",
+        "Node name for S&R": "Hunyuan3D21Shape",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.2"
+        }
+      },
+      "widgets_values": [
+        30,
+        5,
+        256,
+        5713955,
+        "randomize",
+        true,
+        false,
+        6000
+      ]
+    },
+    {
+      "id": 41,
+      "type": "ConvertAndSaveMesh",
+      "pos": [
+        -767.6934435203193,
+        1706.0745496338639
+      ],
+      "size": [
+        270,
+        106
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "input_mesh",
+          "type": "*",
+          "link": 66
+        }
+      ],
+      "outputs": [
+        {
+          "name": "file_path",
+          "type": "STRING",
+          "links": [
+            62
+          ]
+        }
+      ],
+      "properties": {
+        "aux_id": "Tencent-Hunyuan/Hunyuan3D-2.1",
+        "ver": "82920d643c0dc2f7bfd7255f45f62d386edfe60c",
+        "Node name for S&R": "ConvertAndSaveMesh",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.2"
+        }
+      },
+      "widgets_values": [
+        "glb",
+        "Hunyuan3D_Converted",
+        false
+      ]
+    }
+  ],
+  "links": [
+    [
+      62,
+      41,
+      0,
+      40,
+      2,
+      "STRING"
+    ],
+    [
+      66,
+      42,
+      1,
+      41,
+      0,
+      "STRING"
+    ],
+    [
+      67,
+      42,
+      0,
+      43,
+      0,
+      "MESH"
+    ],
+    [
+      69,
+      43,
+      0,
+      37,
+      0,
+      "MESH"
+    ],
+    [
+      70,
+      43,
+      1,
+      36,
+      2,
+      "STRING"
+    ],
+    [
+      71,
+      12,
+      0,
+      42,
+      0,
+      "IMAGE"
+    ],
+    [
+      72,
+      12,
+      0,
+      43,
+      1,
+      "IMAGE"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "workflowRendererVersion": "LG",
+    "ue_links": [],
+    "ds": {
+      "scale": 0.30735605491428214,
+      "offset": [
+        3698.0650923630146,
+        -275.1076551249064
+      ]
+    },
+    "links_added_by_ue": [],
+    "frontendVersion": "1.35.9",
+    "VHS_latentpreview": false,
+    "VHS_latentpreviewrate": 0,
+    "VHS_MetadataImage": true,
+    "VHS_KeepIntermediate": true
+  },
+  "version": 0.4
+}

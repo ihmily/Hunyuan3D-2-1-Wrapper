@@ -22,6 +22,72 @@
 [//]: # (  <a href="#"><img alt="PyPI - Downloads" src="https://img.shields.io/pypi/v/mulankit?logo=pypi"  height=22px></a>)
 <br>
 
+# Hunyuan3D-2-1-Wrapper
+
+ComfyUI custom nodes based on https://github.com/Tencent-Hunyuan/Hunyuan3D-2.1 . Just for easier use in ComfyUI.
+
+## Installation
+
+```bash
+cd ComfyUI/custom_nodes
+git clone https://github.com/ihmily/Hunyuan3D-2-1-Wrapper
+cd Hunyuan3D-2-1-Wrapper
+pip install -r requirements-for-comfyui.txt
+pip install bpy==4.0 --extra-index-url https://download.blender.org/pypi/
+
+cd hy3dpaint/custom_rasterizer
+pip install -e . --no-build-isolation
+cd ../..
+cd hy3dpaint/DifferentiableRenderer
+bash compile_mesh_painter.sh
+cd ../..
+```
+
+If you want use by gradio web, you need install torch first:
+
+```bash
+pip3 install -U xformers==0.0.29.post2 torch==2.6.0 torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
+
+# run gradio app
+python3 gradio_app.py --model_path tencent/Hunyuan3D-2.1 --subfolder hunyuan3d-dit-v2-1 --texgen_model_path tencent/Hunyuan3D-2.1 --low_vram_mode --port 6006
+```
+
+Then perform the same operation as above. Please download the model below.
+
+## Download Models
+
+```bash
+export HF_ENDPOINT=https://hf-mirror.com
+
+# Download VAE model
+huggingface-cli download tencent/Hunyuan3D-2.1 \
+  --include "hunyuan3d-vae-v2-1/*" \
+  --local-dir /root/.cache/hy3dgen/tencent/Hunyuan3D-2.1
+
+# Download DiT model
+huggingface-cli download tencent/Hunyuan3D-2.1 \
+  --include "hunyuan3d-dit-v2-1/*" \
+  --local-dir /root/.cache/hy3dgen/tencent/Hunyuan3D-2.1
+  
+# Download Super-Resolution model
+wget https://github.com/xinntao/Real-ESRGAN/releases/download/v0.1.0/RealESRGAN_x4plus.pth -P hy3dpaint/ckpt
+```
+
+if **huggingface_hub>=0.34**, Please use "hf download" instead of "huggingface-cli".
+
+## Example
+
+> [!TIP]
+>
+> - Gen Shape：GPU Vram is less than 18G 
+> - Gen Textured：GPU Vram is less than 40G <br />
+
+[workflow-example.json](./workflow-example/Hunyuan3D-2.1-example-02.json)
+
+![workflow-example.png](./assets/workflow-example.jpg)
+
+![gradio-example.jpg](./assets/gradio-example.jpg)
+
 ## 🔥 News
 
 - Jul 26, 2025: 🤗 We release the first open-source, simulation-capable, immersive 3D world generation model, [HunyuanWorld-1.0](https://github.com/Tencent-Hunyuan/HunyuanWorld-1.0)!

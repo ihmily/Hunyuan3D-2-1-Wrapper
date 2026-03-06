@@ -20,11 +20,11 @@ import numpy as np
 from PIL import Image
 from typing import List
 from DifferentiableRenderer.MeshRender import MeshRender
-from utils.simplify_mesh_utils import remesh_mesh
-from utils.multiview_utils import multiviewDiffusionNet
-from utils.pipeline_utils import ViewProcessor
-from utils.image_super_utils import imageSuperNet
-from utils.uvwrap_utils import mesh_uv_wrap
+from .utils.simplify_mesh_utils import remesh_mesh
+from .utils.multiview_utils import multiviewDiffusionNet
+from .utils.pipeline_utils import ViewProcessor
+from .utils.image_super_utils import imageSuperNet
+from .utils.uvwrap_utils import mesh_uv_wrap
 from DifferentiableRenderer.mesh_utils import convert_obj_to_glb
 import warnings
 
