@@ -71,6 +71,9 @@ huggingface-cli download tencent/Hunyuan3D-2.1 \
   
 # Download Super-Resolution model
 wget https://github.com/xinntao/Real-ESRGAN/releases/download/v0.1.0/RealESRGAN_x4plus.pth -P hy3dpaint/ckpt
+
+# Download u2net model
+wget https://github.com/danielgatis/rembg/releases/download/v0.0.0/u2net.onnx -P /root/.u2net/
 ```
 
 if **huggingface_hub>=0.34**, Please use "hf download" instead of "huggingface-cli".
