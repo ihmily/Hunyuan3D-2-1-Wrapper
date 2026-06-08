@@ -1,5 +1,6 @@
 import sys
 import os
+import glob
 import uuid
 import torch
 import trimesh
@@ -17,6 +18,89 @@ CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 PROJECT_ROOT = os.path.abspath(os.path.join(CURRENT_DIR, ".."))
 
+HUNYUAN3D_REPO_ID = "tencent/Hunyuan3D-2.1"
+HUNYUAN3D_SHAPE_SUBFOLDER = "hunyuan3d-dit-v2-1"
+HUNYUAN3D_PAINT_SUBFOLDER = "hunyuan3d-paintpbr-v2-1"
+
+
+def _enable_offline_model_loading():
+    offline_env = {
+        "HF_HUB_OFFLINE": "1",
+        "TRANSFORMERS_OFFLINE": "1",
+        "DIFFUSERS_OFFLINE": "1",
+        "HF_HUB_DISABLE_TELEMETRY": "1",
+    }
+    for key, value in offline_env.items():
+        os.environ[key] = value
+
+
+def _expand_paths(paths):
+    for path in paths:
+        if path:
+            yield os.path.abspath(os.path.expanduser(path))
+
+
+def _existing_dirs(paths):
+    for path in _expand_paths(paths):
+        if os.path.isdir(path):
+            yield path
+
+
+def _candidate_hunyuan_model_roots(existing_only=True):
+    direct_roots = [
+        os.environ.get("HUNYUAN3D_MODEL_PATH"),
+        os.environ.get("HY3DGEN_MODEL_PATH"),
+        os.path.join(PROJECT_ROOT, "models", "tencent", "Hunyuan3D-2.1"),
+        os.path.join(PROJECT_ROOT, "models", "Hunyuan3D-2.1"),
+        os.path.join(folder_paths.models_dir, "hunyuan3d", "tencent", "Hunyuan3D-2.1"),
+        os.path.join(folder_paths.models_dir, "hunyuan3d", "Hunyuan3D-2.1"),
+        os.path.join(folder_paths.models_dir, "diffusers", "tencent", "Hunyuan3D-2.1"),
+        os.path.expanduser("~/.cache/hy3dgen/tencent/Hunyuan3D-2.1"),
+    ]
+
+    base_roots = [
+        os.environ.get("HY3DGEN_MODELS"),
+        os.path.join(PROJECT_ROOT, "models"),
+        os.path.join(folder_paths.models_dir, "hunyuan3d"),
+        os.path.join(folder_paths.models_dir, "diffusers"),
+        os.path.expanduser("~/.cache/hy3dgen"),
+    ]
+    base_root_candidates = _existing_dirs(base_roots) if existing_only else _expand_paths(base_roots)
+    for base_root in base_root_candidates:
+        direct_roots.append(os.path.join(base_root, HUNYUAN3D_REPO_ID))
+
+    hf_snapshot_pattern = os.path.expanduser(
+        "~/.cache/huggingface/hub/models--tencent--Hunyuan3D-2.1/snapshots/*"
+    )
+    direct_roots.extend(glob.glob(hf_snapshot_pattern))
+
+    seen = set()
+    roots = _existing_dirs(direct_roots) if existing_only else _expand_paths(direct_roots)
+    for root in roots:
+        if root not in seen:
+            seen.add(root)
+            yield root
+
+
+def _resolve_hunyuan_model_root(required_subfolder):
+    for root in _candidate_hunyuan_model_roots():
+        if os.path.basename(root) == required_subfolder:
+            return os.path.dirname(root)
+        if os.path.isdir(os.path.join(root, required_subfolder)):
+            return root
+
+    searched = "\n  - ".join(_candidate_hunyuan_model_roots(existing_only=False))
+    raise FileNotFoundError(
+        f"Hunyuan3D model subfolder '{required_subfolder}' was not found locally.\n"
+        f"Offline loading is enabled, so no network download will be attempted.\n"
+        f"Set HUNYUAN3D_MODEL_PATH to the local Hunyuan3D-2.1 directory, or place it under "
+        f"~/.cache/hy3dgen/tencent/Hunyuan3D-2.1.\n"
+        f"Searched:\n  - {searched}"
+    )
+
+
+_enable_offline_model_loading()
+
 sys.path.insert(0, os.path.join(PROJECT_ROOT, "hy3dshape"))
 sys.path.insert(0, os.path.join(PROJECT_ROOT, "hy3dpaint"))
 
@@ -31,6 +115,8 @@ except:
 # Load Model
 # =============================
 _MODEL_CACHE = None
+_RMBG_CACHE = None
+_TEXTURE_MODEL_CACHE = None
 
 
 def get_models():
@@ -46,22 +132,49 @@ def get_models():
         Hunyuan3DDiTFlowMatchingPipeline,
     )
     from hy3dshape.pipelines import export_to_trimesh
-    from hy3dshape.rembg import BackgroundRemover
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    hunyuan_model_root = _resolve_hunyuan_model_root(HUNYUAN3D_SHAPE_SUBFOLDER)
+    print(f"[Hunyuan3D] Loading local model root: {hunyuan_model_root}")
 
     shape_model = Hunyuan3DDiTFlowMatchingPipeline.from_pretrained(
-        "tencent/Hunyuan3D-2.1",
-        subfolder="hunyuan3d-dit-v2-1",
+        hunyuan_model_root,
+        subfolder=HUNYUAN3D_SHAPE_SUBFOLDER,
         use_safetensors=False,
         device=device,
         local_files_only=True
     )
 
-    rmbg = BackgroundRemover()
     floater = FloaterRemover()
     degenerate = DegenerateFaceRemover()
     reducer = FaceReducer()
+
+    _MODEL_CACHE = (
+        shape_model,
+        floater,
+        degenerate,
+        reducer,
+        export_to_trimesh,
+    )
+
+    return _MODEL_CACHE
+
+
+def get_background_remover():
+    global _RMBG_CACHE
+
+    if _RMBG_CACHE is None:
+        from hy3dshape.rembg import BackgroundRemover
+        _RMBG_CACHE = BackgroundRemover()
+
+    return _RMBG_CACHE
+
+
+def get_texture_model():
+    global _TEXTURE_MODEL_CACHE
+
+    if _TEXTURE_MODEL_CACHE is not None:
+        return _TEXTURE_MODEL_CACHE
 
     try:
         from hy3dpaint.textureGenPipeline import (
@@ -70,6 +183,12 @@ def get_models():
         )
 
         conf = Hunyuan3DPaintConfig(max_num_view=8, resolution=768)
+        conf.multiview_pretrained_path = _resolve_hunyuan_model_root(HUNYUAN3D_PAINT_SUBFOLDER)
+        conf.local_files_only = True
+        conf.skip_unused_text_components = True
+        conf.use_super_resolution = False
+        conf.render_size = 1024
+        conf.texture_size = 1024
         conf.realesrgan_ckpt_path = os.path.join(PROJECT_ROOT, "hy3dpaint/ckpt/RealESRGAN_x4plus.pth")
         conf.multiview_cfg_path = os.path.join(PROJECT_ROOT, "hy3dpaint/cfgs/hunyuan-paint-pbr.yaml")
         conf.custom_pipeline = os.path.join(PROJECT_ROOT, "hy3dpaint/hunyuanpaintpbr")
@@ -81,17 +200,9 @@ def get_models():
         traceback.print_exc()
         raise e
 
-    _MODEL_CACHE = (
-        shape_model,
-        rmbg,
-        floater,
-        degenerate,
-        reducer,
-        tex_model,
-        export_to_trimesh,
-    )
+    _TEXTURE_MODEL_CACHE = tex_model
 
-    return _MODEL_CACHE
+    return _TEXTURE_MODEL_CACHE
 
 
 # =============================
@@ -134,11 +245,9 @@ class Hunyuan3DShape:
 
         (
             shape_model,
-            rmbg_worker,
             floater_remove_worker,
             degenerate_face_remove_worker,
             face_reduce_worker,
-            _,
             export_to_trimesh,
         ) = get_models()
 
@@ -148,6 +257,7 @@ class Hunyuan3DShape:
         pil_image = Image.fromarray(image)
 
         if remove_bg:
+            rmbg_worker = get_background_remover()
             pil_image = rmbg_worker(pil_image.convert("RGB"))
 
         generator = torch.Generator(device=device).manual_seed(seed)
@@ -192,6 +302,11 @@ class Hunyuan3DTexture:
             "required": {
                 "mesh": ("MESH",),
                 "image": ("IMAGE",),
+                "texture_resolution": ("INT", {"default": 512, "min": 320, "max": 1024}),
+                "render_size": ("INT", {"default": 1024, "min": 512, "max": 2048}),
+                "texture_size": ("INT", {"default": 1024, "min": 512, "max": 4096}),
+                "max_views": ("INT", {"default": 6, "min": 6, "max": 18}),
+                "use_super_resolution": ("BOOLEAN", {"default": False}),
             }
         }
 
@@ -200,16 +315,17 @@ class Hunyuan3DTexture:
     FUNCTION = "paint"
     CATEGORY = "Hunyuan3D"
 
-    def paint(self, mesh, image):
-        (
-            _,
-            _,
-            _,
-            _,
-            _,
-            tex_pipeline,
-            _,
-        ) = get_models()
+    def paint(
+        self,
+        mesh,
+        image,
+        texture_resolution,
+        render_size,
+        texture_size,
+        max_views,
+        use_super_resolution,
+    ):
+        tex_pipeline = get_texture_model()
 
         if tex_pipeline is None:
             raise RuntimeError("Texture model not available")
@@ -236,6 +352,11 @@ class Hunyuan3DTexture:
             image_path=pil_image,
             output_mesh_path=textured_obj_path,
             save_glb=False,
+            max_selected_view_num=max_views,
+            resolution=texture_resolution,
+            render_size=render_size,
+            texture_size=texture_size,
+            use_super_resolution=use_super_resolution,
         )
 
         base_name = os.path.splitext(textured_obj_path)[0]

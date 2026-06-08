@@ -13,6 +13,7 @@
 # by Tencent in accordance with TENCENT HUNYUAN COMMUNITY LICENSE AGREEMENT.
 
 import os
+import time
 import torch
 import random
 import numpy as np
@@ -24,8 +25,26 @@ from diffusers import DiffusionPipeline
 from diffusers import EulerAncestralDiscreteScheduler, DDIMScheduler, UniPCMultistepScheduler
 
 
+def _offline_enabled(config):
+    return getattr(config, "local_files_only", False) or os.environ.get("HF_HUB_OFFLINE", "0") == "1"
+
+
+def _resolve_local_subfolder(model_root, subfolder):
+    expanded_root = os.path.abspath(os.path.expanduser(model_root))
+    if os.path.isdir(os.path.join(expanded_root, subfolder)):
+        return os.path.join(expanded_root, subfolder)
+    if os.path.basename(expanded_root) == subfolder and os.path.isdir(expanded_root):
+        return expanded_root
+    return None
+
+
+def _log_timing(name, start):
+    print(f"[Hunyuan3D][Timing] {name}: {time.perf_counter() - start:.2f}s")
+
+
 class multiviewDiffusionNet:
     def __init__(self, config) -> None:
+        init_start = time.perf_counter()
         self.device = config.device
 
         cfg_path = config.multiview_cfg_path
@@ -34,28 +53,68 @@ class multiviewDiffusionNet:
         self.cfg = cfg
         self.mode = self.cfg.model.params.stable_diffusion_config.custom_pipeline[2:]
 
-        model_path = huggingface_hub.snapshot_download(
-            repo_id=config.multiview_pretrained_path,
-            allow_patterns=["hunyuan3d-paintpbr-v2-1/*"],
-        )
+        subfolder = "hunyuan3d-paintpbr-v2-1"
+        model_path = _resolve_local_subfolder(config.multiview_pretrained_path, subfolder)
+        if model_path is None:
+            if _offline_enabled(config):
+                raise FileNotFoundError(
+                    f"Paint model subfolder '{subfolder}' was not found under "
+                    f"{config.multiview_pretrained_path}. Offline loading is enabled."
+                )
+            model_path = huggingface_hub.snapshot_download(
+                repo_id=config.multiview_pretrained_path,
+                allow_patterns=[f"{subfolder}/*"],
+            )
+            model_path = os.path.join(model_path, subfolder)
 
-        model_path = os.path.join(model_path, "hunyuan3d-paintpbr-v2-1")
-        pipeline = DiffusionPipeline.from_pretrained(
-            model_path,
-            custom_pipeline=custom_pipeline, 
-            torch_dtype=torch.float16
+        load_kwargs = dict(
+            custom_pipeline=custom_pipeline,
+            torch_dtype=torch.float16,
+            local_files_only=_offline_enabled(config),
+            trust_remote_code=True,
         )
+        if getattr(config, "skip_unused_text_components", True):
+            load_kwargs.update(
+                text_encoder=None,
+                tokenizer=None,
+                feature_extractor=None,
+                safety_checker=None,
+                requires_safety_checker=False,
+            )
+
+        load_start = time.perf_counter()
+        try:
+            pipeline = DiffusionPipeline.from_pretrained(model_path, **load_kwargs)
+        except Exception as e:
+            if not getattr(config, "skip_unused_text_components", True):
+                raise
+            print(
+                "[Hunyuan3D] Fast texture load without text components failed; "
+                f"falling back to full pipeline load. Error: {e}"
+            )
+            load_kwargs.pop("text_encoder", None)
+            load_kwargs.pop("tokenizer", None)
+            load_kwargs.pop("feature_extractor", None)
+            load_kwargs.pop("safety_checker", None)
+            load_kwargs.pop("requires_safety_checker", None)
+            pipeline = DiffusionPipeline.from_pretrained(model_path, **load_kwargs)
+        _log_timing("texture DiffusionPipeline.from_pretrained", load_start)
 
         pipeline.scheduler = UniPCMultistepScheduler.from_config(pipeline.scheduler.config, timestep_spacing="trailing")
         pipeline.set_progress_bar_config(disable=True)
         pipeline.eval()
         setattr(pipeline, "view_size", cfg.model.params.get("view_size", 320))
+        to_start = time.perf_counter()
         self.pipeline = pipeline.to(self.device)
+        _log_timing("texture pipeline.to(cuda)", to_start)
 
         if hasattr(self.pipeline.unet, "use_dino") and self.pipeline.unet.use_dino:
             from hunyuanpaintpbr.unet.modules import Dino_v2
+            dino_start = time.perf_counter()
             self.dino_v2 = Dino_v2(config.dino_ckpt_path).to(torch.float16)
             self.dino_v2 = self.dino_v2.to(self.device)
+            _log_timing("texture Dino_v2 load", dino_start)
+        _log_timing("texture multiview model init total", init_start)
 
     def seed_everything(self, seed):
         random.seed(seed)
@@ -98,8 +157,10 @@ class multiviewDiffusionNet:
         kwargs["images_position"] = position_image
 
         if hasattr(self.pipeline.unet, "use_dino") and self.pipeline.unet.use_dino:
+            dino_start = time.perf_counter()
             dino_hidden_states = self.dino_v2(input_images[0])
             kwargs["dino_hidden_states"] = dino_hidden_states
+            _log_timing("texture DINO encode", dino_start)
 
         sync_condition = None
 
@@ -110,6 +171,7 @@ class multiviewDiffusionNet:
             "ShiftSNRScheduler": 15,
         }
 
+        diffusion_start = time.perf_counter()
         mvd_image = self.pipeline(
             input_images[0:1],
             num_inference_steps=infer_steps_dict[self.pipeline.scheduler.__class__.__name__],
@@ -118,6 +180,7 @@ class multiviewDiffusionNet:
             guidance_scale=3.0,
             **kwargs,
         ).images
+        _log_timing("texture multiview diffusion", diffusion_start)
 
         if "pbr" in self.mode:
             mvd_image = {"albedo": mvd_image[:num_view], "mr": mvd_image[num_view:]}
