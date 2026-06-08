@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import importlib
+import os
 from omegaconf import OmegaConf, DictConfig, ListConfig
 
 import torch
@@ -54,6 +55,7 @@ def instantiate_from_config(config, **kwargs):
                     config["from_pretrained"], 
                     use_safetensors=config.get('use_safetensors', False),
                     variant=config.get('variant', 'fp16'),
+                    local_files_only=os.environ.get('HF_HUB_OFFLINE', '0') == '1',
                     **params_kwargs) 
 
     params = config.get("params", dict())

@@ -91,14 +91,31 @@ def smart_load_model(
     subfolder,
     use_safetensors,
     variant,
+    local_files_only=None,
 ):
     original_model_path = model_path
-    # try local path
-    base_dir = os.environ.get('HY3DGEN_MODELS', '~/.cache/hy3dgen')
-    model_fld = os.path.expanduser(os.path.join(base_dir, model_path))
-    model_path = os.path.expanduser(os.path.join(base_dir, model_path, subfolder))
+    local_files_only = (
+        local_files_only
+        if local_files_only is not None
+        else os.environ.get('HF_HUB_OFFLINE', '0') == '1'
+    )
+
+    expanded_model_path = os.path.abspath(os.path.expanduser(model_path))
+    if os.path.isdir(expanded_model_path):
+        model_fld = expanded_model_path
+        model_path = os.path.join(expanded_model_path, subfolder)
+    else:
+        # try local path
+        base_dir = os.environ.get('HY3DGEN_MODELS', '~/.cache/hy3dgen')
+        model_fld = os.path.expanduser(os.path.join(base_dir, model_path))
+        model_path = os.path.expanduser(os.path.join(base_dir, model_path, subfolder))
     logger.info(f'Try to load model from local path: {model_path}')
     if not os.path.exists(model_path):
+        if local_files_only:
+            raise FileNotFoundError(
+                f"Model path {model_path} not found and local_files_only/offline mode is enabled. "
+                f"Please download {original_model_path}/{subfolder} locally first."
+            )
         logger.info('Model path not exists, try to download from huggingface')
         try:
             from huggingface_hub import snapshot_download
@@ -106,7 +123,8 @@ def smart_load_model(
             path = snapshot_download(
                 repo_id=original_model_path,
                 allow_patterns=[f"{subfolder}/*"],  # 关键修改：模式匹配子文件夹
-                local_dir=model_fld 
+                local_dir=model_fld,
+                local_files_only=local_files_only,
             )
             model_path = os.path.join(path, subfolder)  # 保持路径拼接逻辑不变
         except ImportError:

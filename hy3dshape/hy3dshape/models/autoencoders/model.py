@@ -168,7 +168,8 @@ class VectsetVAE(nn.Module):
             model_path,
             subfolder=subfolder,
             use_safetensors=use_safetensors,
-            variant=variant
+            variant=variant,
+            local_files_only=kwargs.get('local_files_only'),
         )
 
         return cls.from_single_file(

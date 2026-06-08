@@ -23,6 +23,7 @@
 # by Tencent in accordance with TENCENT HUNYUAN COMMUNITY LICENSE AGREEMENT.
 
 import numpy as np
+import os
 import torch
 import torch.nn as nn
 from torchvision import transforms
@@ -67,7 +68,10 @@ class ImageEncoder(nn.Module):
         super().__init__()
 
         if config is None:
-            self.model = AutoModel.from_pretrained(version)
+            self.model = AutoModel.from_pretrained(
+                version,
+                local_files_only=os.environ.get("TRANSFORMERS_OFFLINE", "0") == "1",
+            )
         else:
             self.model = self.MODEL_CLASS(self.MODEL_CONFIG_CLASS.from_dict(config))
             

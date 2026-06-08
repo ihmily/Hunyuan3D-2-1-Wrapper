@@ -34,6 +34,7 @@ git clone https://github.com/ihmily/Hunyuan3D-2-1-Wrapper
 cd Hunyuan3D-2-1-Wrapper
 pip install -r requirements-for-comfyui.txt
 pip install bpy==4.0 --extra-index-url https://download.blender.org/pypi/
+pip install fast_simplification
 
 cd hy3dpaint/custom_rasterizer
 pip install -e . --no-build-isolation
@@ -60,15 +61,23 @@ Then perform the same operation as above. Please download the model below.
 export HF_ENDPOINT=https://hf-mirror.com
 
 # Download VAE model
-huggingface-cli download tencent/Hunyuan3D-2.1 \
+hf download tencent/Hunyuan3D-2.1 \
   --include "hunyuan3d-vae-v2-1/*" \
   --local-dir /root/.cache/hy3dgen/tencent/Hunyuan3D-2.1
 
 # Download DiT model
-huggingface-cli download tencent/Hunyuan3D-2.1 \
+hf download tencent/Hunyuan3D-2.1 \
   --include "hunyuan3d-dit-v2-1/*" \
   --local-dir /root/.cache/hy3dgen/tencent/Hunyuan3D-2.1
-  
+
+# Download Paint/PBR texture model
+hf download tencent/Hunyuan3D-2.1 \
+  --include "hunyuan3d-paintpbr-v2-1/*" \
+  --local-dir /root/.cache/hy3dgen/tencent/Hunyuan3D-2.1
+
+# Download DINOv2 model used by texture generation
+hf download facebook/dinov2-giant
+
 # Download Super-Resolution model
 wget https://github.com/xinntao/Real-ESRGAN/releases/download/v0.1.0/RealESRGAN_x4plus.pth -P hy3dpaint/ckpt
 
@@ -76,7 +85,7 @@ wget https://github.com/xinntao/Real-ESRGAN/releases/download/v0.1.0/RealESRGAN_
 wget https://github.com/danielgatis/rembg/releases/download/v0.0.0/u2net.onnx -P /root/.u2net/
 ```
 
-if **huggingface_hub>=0.34**, Please use "hf download" instead of "huggingface-cli".
+If your `huggingface_hub` version is older than `0.34`, use `huggingface-cli download` instead of `hf download`.
 
 ## Example
 
