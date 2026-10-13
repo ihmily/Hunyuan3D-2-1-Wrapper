@@ -28,12 +28,19 @@ ComfyUI custom nodes based on https://github.com/Tencent-Hunyuan/Hunyuan3D-2.1 .
 
 ## Installation
 
+Environment: python 3.10 / 3.11
+
 ```bash
 cd ComfyUI/custom_nodes
 git clone https://github.com/ihmily/Hunyuan3D-2-1-Wrapper
 cd Hunyuan3D-2-1-Wrapper
 pip install -r requirements-for-comfyui.txt
+
+# when python=3.10
 pip install bpy==4.0 --extra-index-url https://download.blender.org/pypi/
+# when python=3.11
+python3.11 -m pip install https://download.blender.org/pypi/bpy/bpy-4.3.0-cp311-cp311-manylinux_2_28_x86_64.whl
+
 pip install fast_simplification
 
 cd hy3dpaint/custom_rasterizer
